@@ -1,5 +1,6 @@
 package com.hospitalsystem.controller;
 
+import com.hospitalsystem.exception.ResourceNotFoundException;
 import com.hospitalsystem.model.Consulta;
 import com.hospitalsystem.service.ConsultaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +11,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/consultas")
@@ -28,9 +28,9 @@ public class ConsultaController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Consulta> buscarPorId(@PathVariable Long id) {
-        Optional<Consulta> consulta = consultaService.buscarPorId(id);
-        return consulta.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Consulta consulta = consultaService.buscarPorId(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Consulta com ID " + id + " não encontrada"));
+        return new ResponseEntity<>(consulta, HttpStatus.OK);
     }
 
     @GetMapping("/paciente/{pacienteId}")
@@ -64,7 +64,7 @@ public class ConsultaController {
         if (consultaAtualizadaResponse != null) {
             return new ResponseEntity<>(consultaAtualizadaResponse, HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Consulta com ID " + id + " não encontrada para atualização");
     }
 
     @DeleteMapping("/{id}")
@@ -72,6 +72,6 @@ public class ConsultaController {
         if (consultaService.excluir(id)) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Consulta com ID " + id + " não encontrada para exclusão");
     }
 }
