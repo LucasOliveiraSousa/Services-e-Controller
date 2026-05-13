@@ -1,5 +1,6 @@
 package com.hospitalsystem.controller;
 
+import com.hospitalsystem.exception.ResourceNotFoundException;
 import com.hospitalsystem.model.Medico;
 import com.hospitalsystem.service.MedicoService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/medicos")
@@ -26,16 +26,16 @@ public class MedicoController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Medico> buscarPorId(@PathVariable Long id) {
-        Optional<Medico> medico = medicoService.buscarPorId(id);
-        return medico.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Medico medico = medicoService.buscarPorId(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Médico com ID " + id + " não encontrado"));
+        return new ResponseEntity<>(medico, HttpStatus.OK);
     }
 
     @GetMapping("/crm/{crm}")
     public ResponseEntity<Medico> buscarPorCrm(@PathVariable String crm) {
-        Optional<Medico> medico = medicoService.buscarPorCrm(crm);
-        return medico.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Medico medico = medicoService.buscarPorCrm(crm)
+                .orElseThrow(() -> new ResourceNotFoundException("Médico com CRM '" + crm + "' não encontrado"));
+        return new ResponseEntity<>(medico, HttpStatus.OK);
     }
 
     @PostMapping
@@ -50,7 +50,7 @@ public class MedicoController {
         if (medicoAtualizadoResponse != null) {
             return new ResponseEntity<>(medicoAtualizadoResponse, HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Médico com ID " + id + " não encontrado para atualização");
     }
 
     @DeleteMapping("/{id}")
@@ -58,6 +58,6 @@ public class MedicoController {
         if (medicoService.excluir(id)) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Médico com ID " + id + " não encontrado para exclusão");
     }
 }
