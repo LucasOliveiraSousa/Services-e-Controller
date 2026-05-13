@@ -1,5 +1,6 @@
 package com.hospitalsystem.controller;
 
+import com.hospitalsystem.exception.ResourceNotFoundException;
 import com.hospitalsystem.model.Convenio;
 import com.hospitalsystem.service.ConvenioService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,7 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/convenios")
@@ -25,21 +25,21 @@ public class ConvenioController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Convenio> buscarPorId(@PathVariable Long id) {
-        Optional<Convenio> convenio = convenioService.buscarPorId(id);
-        return convenio.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Convenio convenio = convenioService.buscarPorId(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Convênio com ID " + id + " não encontrado"));
+        return new ResponseEntity<>(convenio, HttpStatus.OK);
     }
 
     @GetMapping("/nome/{nome}")
     public ResponseEntity<Convenio> buscarPorNome(@PathVariable String nome) {
-        Optional<Convenio> convenio = convenioService.buscarPorNome(nome);
-        return convenio.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
-                .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        Convenio convenio = convenioService.buscarPorNome(nome)
+                .orElseThrow(() -> new ResourceNotFoundException("Convênio com nome '" + nome + "' não encontrado"));
+        return new ResponseEntity<>(convenio, HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<Convenio> criar(@RequestBody Convenio convenio) {
-        Convenio novoConvenio = convenioService.criar(convenido);
+        Convenio novoConvenio = convenioService.criar(convenio);
         return new ResponseEntity<>(novoConvenio, HttpStatus.CREATED);
     }
 
@@ -49,7 +49,7 @@ public class ConvenioController {
         if (convenioAtualizadoResponse != null) {
             return new ResponseEntity<>(convenioAtualizadoResponse, HttpStatus.OK);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Convênio com ID " + id + " não encontrado para atualização");
     }
 
     @DeleteMapping("/{id}")
@@ -57,6 +57,6 @@ public class ConvenioController {
         if (convenioService.excluir(id)) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
-        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        throw new ResourceNotFoundException("Convênio com ID " + id + " não encontrado para exclusão");
     }
 }
